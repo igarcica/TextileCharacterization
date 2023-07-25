@@ -2,19 +2,28 @@ import cv2
 import os
 import math
 
-data_dir = "./data"
-all_files = False
-test_image = data_dir + "/flowers10.jpg"
-cloth_dims = (17,24)
+data_dir = "./test/"
+write_dir = "./results2/"
 
-plate_image = data_dir + "/brown_plate10.jpg"
-plate_r = 10/2
+all_files = False
+cloth = "brown"
+cloth_dims = (20,22)
+plate_diam = 7
+use_plate = False
+px_cm_ratio = 130
+
+plate_image = data_dir + "brown_plate" + str(plate_diam) + ".jpg"
+cloth_image = data_dir + cloth + str(plate_diam) + "_2.jpg"
+write_image = write_dir + cloth + str(plate_diam) + "_res.jpg"
+
+activate_print = True
+save_img = False
 #cloth_measured_total_area = 0
 
 #########################################################
 
 def do_things(img):
-    #img = cv2.imread("pink.jpg")  # Read image
+    
     img = cv2.resize(img, (int(img.shape[1]*0.1),int(img.shape[0]*0.1)), interpolation = cv2.INTER_AREA) 
 
     # convert the image to grayscale format
@@ -49,8 +58,8 @@ def do_things(img):
     contours, hierarchy = cv2.findContours(dilated,cv2.RETR_TREE,cv2.CHAIN_APPROX_NONE)
     contour = max(contours, key = cv2.contourArea) #key=len
     
-    contourImg = cv2.drawContours(img, contour, -1, (0,255,0), 3)
-    cv2.imshow("Contours", contourImg)
+    contour_img = cv2.drawContours(img, contour, -1, (0,255,0), 3)
+    cv2.imshow("Contours", contour_img)
 
 #    convexHull = cv2.convexHull(contour, False)
 #    img2 = cv2.drawContours(img, [convexHull], -1, (255, 0, 0), 2)
@@ -65,25 +74,33 @@ def do_things(img):
     measured_area = cv2.contourArea(contour)
     print("Measured contour area: ", measured_area)
 
-    return measured_area
+    return measured_area, contour_img
 
 
 
 def get_px_cm_ratio(measured_plate_area):
 
-    real_plate_area_cm = math.pi*pow((plate_r),2)
-    print("Real plate area (cm): ", real_plate_area_cm)
-
-    px_cm = measured_plate_area / real_plate_area_cm
-    print(px_cm)
-
-    measured_plate_area_cm = measured_plate_area / px_cm
-    print("Measured plate area (cm): ", measured_plate_area_cm)
-
-    measured_plate_r_cm = math.sqrt(measured_plate_area_cm/math.pi)
-    print("Measured plate radius (cm): ", measured_plate_r_cm)
-
+    plate_real_area_cm = math.pi*pow((plate_diam/2),2)
+    px_cm = plate_measured_area / plate_real_area_cm
     print("PX / CM: ", px_cm)
+
+    ## Comparison
+#    plate_measured_area_cm = plate_measured_area/px_cm_ratio
+#    plate_measured_r_cm = math.sqrt(plate_measured_area_cm/math.pi)
+#    print("Measured plate radius (cm): ", plate_measured_r_cm)
+#    print("Measured plate area (cm2): ", plate_measured_area_cm)
+#    print("Real plate area (cm2): ", plate_real_area_cm)
+#
+#    print_info(activate_print, "Real plate area (cm): ", real_plate_area_cm)
+#    px_cm = measured_plate_area / real_plate_area_cm
+#
+#    measured_plate_area_cm = measured_plate_area / px_cm
+#    print_info(activate_print,"Measured plate area (cm): ", measured_plate_area_cm)
+#
+#    measured_plate_r_cm = math.sqrt(measured_plate_area_cm/math.pi)
+#    print_info(activate_print,"Measured plate radius (cm): ", measured_plate_r_cm)
+#
+#    print("PX / CM: ", px_cm)
 
     return px_cm
 
@@ -95,28 +112,44 @@ def compute_drape_ratio(plate_area, cloth_total_area, cloth_measured_area):
     return drape
 
 
+def print_info(activate, arg1, arg2=""):
+    if(activate):
+        print(arg1, arg2)
+
 
 #########################################################
 
-# Get px cm ratio using the plate as reference
-print("\033[94m Measuring px cm ratio...\033[0m")
-print(plate_image)
-plate_img = cv2.imread(plate_image)
-plate_measured_area = do_things(plate_img)
-px_cm = get_px_cm_ratio(plate_measured_area)
-plate_measured_area_cm = plate_measured_area/px_cm
-plate_real_area_cm = math.pi*pow((plate_r),2)
+## Get px cm ratio using the plate as reference
+if(use_plate):
+    print("\033[94m Measuring px cm ratio...\033[0m")
+    plate_img = cv2.imread(plate_image)
+    plate_measured_area, contour_img = do_things(plate_img)
+    
+    px_cm = get_px_cm_ratio(plate_measured_area)
+    plate_area_cm = plate_measured_area_cm
+else:
+    plate_real_area_cm = math.pi*pow((plate_diam/2),2)
+    plate_area_cm = plate_real_area_cm
+
 
 if not (all_files):
-    print("\033[94m Measuring drape area of ", test_image, "\033[0m")
-    img = cv2.imread(test_image)
-    cloth_measured_area = do_things(img)
-    cloth_measured_area_cm = cloth_measured_area/px_cm
+    print("\033[94m Measuring drape area of ", cloth_image, "\033[0m")
+    img = cv2.imread(cloth_image)
+    cloth_measured_area, contour_img = do_things(img)
+    
+    ## Compute areas in cm
+    cloth_measured_area_cm = cloth_measured_area/px_cm_ratio
     print("Cloth measured area (cm): ", cloth_measured_area_cm)
     cloth_total_area_cm = cloth_dims[0]*cloth_dims[1]
+    print("Plate real area (cm2): ", plate_area_cm)
     print("Cloth real area (cm): ", cloth_total_area_cm)
-    drape_ratio = compute_drape_ratio(plate_measured_area_cm, cloth_total_area_cm, cloth_measured_area_cm)
+    
+    ## Compute drape
+    drape_ratio = compute_drape_ratio(plate_area_cm, cloth_total_area_cm, cloth_measured_area_cm)
     print("\033[92m DRAPE RATIO (%): ", drape_ratio*100, " % \033[0m")
+    ## Save image
+    if(save_img):
+        cv2.imwrite(write_image, contour_img)
 
 if(all_files):
     print("all files")
@@ -125,13 +158,23 @@ if(all_files):
         if os.path.isfile(f) and filename.endswith('.jpg'):
             print("\033[94m Measuring drape area of ", f, "\033[0m ")
             img = cv2.imread(f)
-            cloth_measured_area = do_things(img)
-            cloth_measured_area_cm = cloth_measured_area/px_cm
+            cloth_measured_area, contour_img = do_things(img)
+            print(filename)
+    
+            ## Compute areas in cm
+            cloth_measured_area_cm = cloth_measured_area/px_cm_ratio
             print("Cloth measured area (cm): ", cloth_measured_area_cm)
             cloth_total_area_cm = cloth_dims[0]*cloth_dims[1]
+            print("Plate real area (cm2): ", plate_area_cm)
             print("Cloth real area (cm): ", cloth_total_area_cm)
-            drape_ratio = compute_drape_ratio(plate_real_area_cm, cloth_total_area_cm, cloth_measured_area_cm)
+
+            ## Compute drape
+            drape_ratio = compute_drape_ratio(plate_area_cm, cloth_total_area_cm, cloth_measured_area_cm)
             print("\033[92m DRAPE RATIO (%): ", drape_ratio*100, "% \033[0m")
+            ## Save image
+            if(save_img):
+                write_image = write_dir + "res_"+ filename
+                cv2.imwrite(write_image, contour_img)
 
 
 
