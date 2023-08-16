@@ -2,29 +2,33 @@ import cv2
 import os
 import math
 
-data_dir = "./test/"
-write_dir = "./results2/"
+data_dir = "/home/irene/Desktop/stiffness/"
+write_dir = "./AOS/"
 
-all_files = False
-cloth = "brown"
-cloth_dims = (20,22)
-plate_diam = 7
+all_files = False #
+cloth = "test" #
+cloth_dims = (17,23) # Size of object to compute real area
+plate_diam = 10 #plate diameter
+px_cm_ratio = 367
 use_plate = False
-px_cm_ratio = 130
+plate_image = data_dir + "brown_plate" + str(plate_diam) + ".jpg" #
+cloth_image = data_dir + cloth + str(plate_diam) + "_2.jpg" #
+write_image = write_dir + cloth + str(plate_diam) + "_res.jpg" #
+resize_percentage = 0.3
 
-plate_image = data_dir + "brown_plate" + str(plate_diam) + ".jpg"
-cloth_image = data_dir + cloth + str(plate_diam) + "_2.jpg"
-write_image = write_dir + cloth + str(plate_diam) + "_res.jpg"
+write_image = write_dir + cloth + ".jpg" #
+cloth_image = data_dir + cloth + ".jpg" #
+#cloth_image = "./test/blue_lines_v.jpg" #
 
-activate_print = True
-save_img = False
-#cloth_measured_total_area = 0
+activate_print = True #
+save_img = True #
+show_imgs = True
 
 #########################################################
 
 def do_things(img):
     
-    img = cv2.resize(img, (int(img.shape[1]*0.1),int(img.shape[0]*0.1)), interpolation = cv2.INTER_AREA) 
+    img = cv2.resize(img, (int(img.shape[1]*resize_percentage),int(img.shape[0]*resize_percentage)), interpolation = cv2.INTER_AREA) 
 
     # convert the image to grayscale format
 #    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -35,8 +39,9 @@ def do_things(img):
       
     ## Applying the Canny Edge filter
     edge = cv2.Canny(img, 3000, 150, apertureSize=5)
-    cv2.imshow('original', img)
-    cv2.imshow('edge', edge)
+    if(show_imgs):
+        cv2.imshow('original', img)
+        cv2.imshow('edge', edge)
     
     ## test canny parameters
     #for i in range(3000,4000,10):
@@ -52,14 +57,17 @@ def do_things(img):
     #Dilate canny edges to join and close contours
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(2,2))
     dilated = cv2.dilate(edge, kernel)
-    cv2.imshow('dilated', dilated)
-    
+    if(show_imgs):
+        cv2.imshow('dilated', dilated)
+
     # Find largest contour to filter noise
     contours, hierarchy = cv2.findContours(dilated,cv2.RETR_TREE,cv2.CHAIN_APPROX_NONE)
     contour = max(contours, key = cv2.contourArea) #key=len
     
     contour_img = cv2.drawContours(img, contour, -1, (0,255,0), 3)
-    cv2.imshow("Contours", contour_img)
+    if(show_imgs):
+        cv2.imshow("Contours", contour_img)
+    #cv2.imwrite('./test2/blue_lines_v.jpg', contour_img)
 
 #    convexHull = cv2.convexHull(contour, False)
 #    img2 = cv2.drawContours(img, [convexHull], -1, (255, 0, 0), 2)
@@ -119,38 +127,19 @@ def print_info(activate, arg1, arg2=""):
 
 #########################################################
 
-## Get px cm ratio using the plate as reference
-if(use_plate):
+if(use_plate): ## Get px cm ratio using the plate image as reference
     print("\033[94m Measuring px cm ratio...\033[0m")
     plate_img = cv2.imread(plate_image)
     plate_measured_area, contour_img = do_things(plate_img)
     
     px_cm = get_px_cm_ratio(plate_measured_area)
     plate_area_cm = plate_measured_area_cm
-else:
+else: ## Use the given px cm ratio + measure real plate area
     plate_real_area_cm = math.pi*pow((plate_diam/2),2)
     plate_area_cm = plate_real_area_cm
 
 
-if not (all_files):
-    print("\033[94m Measuring drape area of ", cloth_image, "\033[0m")
-    img = cv2.imread(cloth_image)
-    cloth_measured_area, contour_img = do_things(img)
-    
-    ## Compute areas in cm
-    cloth_measured_area_cm = cloth_measured_area/px_cm_ratio
-    print("Cloth measured area (cm): ", cloth_measured_area_cm)
-    cloth_total_area_cm = cloth_dims[0]*cloth_dims[1]
-    print("Plate real area (cm2): ", plate_area_cm)
-    print("Cloth real area (cm): ", cloth_total_area_cm)
-    
-    ## Compute drape
-    drape_ratio = compute_drape_ratio(plate_area_cm, cloth_total_area_cm, cloth_measured_area_cm)
-    print("\033[92m DRAPE RATIO (%): ", drape_ratio*100, " % \033[0m")
-    ## Save image
-    if(save_img):
-        cv2.imwrite(write_image, contour_img)
-
+## Use all images in the fodler "dara_dir"
 if(all_files):
     print("all files")
     for filename in sorted(os.listdir(data_dir)):
@@ -176,6 +165,27 @@ if(all_files):
                 write_image = write_dir + "res_"+ filename
                 cv2.imwrite(write_image, contour_img)
 
+## Use a unique image ("cloth_image")
+else: 
+    print("\033[94m Measuring drape area of ", cloth_image, "\033[0m")
+    img = cv2.imread(cloth_image)
+    cloth_measured_area, contour_img = do_things(img)
+    
+    ## Compute areas in cm
+    cloth_measured_area_cm = cloth_measured_area/px_cm_ratio
+    print("Cloth measured area (cm): ", cloth_measured_area_cm)
+    cloth_total_area_cm = cloth_dims[0]*cloth_dims[1]
+    print("Plate real area (cm2): ", plate_area_cm)
+    print("Cloth real area (cm): ", cloth_total_area_cm)
+    
+    ## Compute drape
+    drape_ratio = compute_drape_ratio(plate_area_cm, cloth_total_area_cm, cloth_measured_area_cm)
+    print("\033[92m DRAPE RATIO (%): ", drape_ratio*100, " % \033[0m")
+    ## Save image
+    if(save_img):
+        cv2.imwrite(write_image, contour_img)
+
+
 
 
 
@@ -198,3 +208,8 @@ if(all_files):
 # OK - Close contours to get Area -> Dilation
 # Not necessary (previous problem was solved using max area instead of length) - Try another method to close contours -> Convex hull - https://answers.opencv.org/question/74777/how-to-use-approxpolydp-to-close-contours/
 # Generalization method for different textured samples + different lightnings
+
+#- Output failure in case measured cloth area > real cloth area or < plate area
+# - Poner imagen borrosa para que detecte mejor el borde y obvie texturas interiores
+# - Draw manually contour in image to compare between automatic and manual area
+# - Write CSV results (measured cloth in px and cm, cloth real area, used px_cm ratio, used plate diameter)
