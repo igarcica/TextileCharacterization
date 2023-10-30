@@ -2,14 +2,14 @@ import cv2
 import os
 import math
 
-data_dir = "/home/irene/Desktop/stiffness/"
-write_dir = "./AOS/"
+data_dir = "./HCOS/"
+write_dir = "./test/"
 
 all_files = False #
-cloth = "test" #
-cloth_dims = (17,23) # Size of object to compute real area
-plate_diam = 10 #plate diameter
-px_cm_ratio = 367
+cloth = "towel_l" #
+cloth_dims = (35,44) # Size of object to compute real area
+plate_diam = 21 #plate diameter
+px_cm_ratio = 440
 use_plate = False
 plate_image = data_dir + "brown_plate" + str(plate_diam) + ".jpg" #
 cloth_image = data_dir + cloth + str(plate_diam) + "_2.jpg" #
@@ -21,7 +21,7 @@ cloth_image = data_dir + cloth + ".jpg" #
 #cloth_image = "./test/blue_lines_v.jpg" #
 
 activate_print = True #
-save_img = True #
+save_img = False #
 show_imgs = True
 
 #########################################################
@@ -38,7 +38,7 @@ def do_things(img):
     t_upper = 150  # Upper threshold
       
     ## Applying the Canny Edge filter
-    edge = cv2.Canny(img, 3000, 150, apertureSize=5)
+    edge = cv2.Canny(img, 5000, 150, apertureSize=5)
     if(show_imgs):
         cv2.imshow('original', img)
         cv2.imshow('edge', edge)
