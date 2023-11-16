@@ -2,25 +2,24 @@ import cv2
 import os
 import math
 
-data_dir = "./HCOS/"
+data_dir = "./test/"
 write_dir = "./test/"
 
 all_files = False #
-cloth = "towel_l" #
-cloth_dims = (35,44) # Size of object to compute real area
-plate_diam = 21 #plate diameter
-px_cm_ratio = 440
+cloth = "test" #
+cloth_dims = (50,90) # Size of object to compute real area
+plate_diam = 27 #plate diameter
+px_cm_ratio = 295
 use_plate = False
-plate_image = data_dir + "brown_plate" + str(plate_diam) + ".jpg" #
-cloth_image = data_dir + cloth + str(plate_diam) + "_2.jpg" #
-write_image = write_dir + cloth + str(plate_diam) + "_res.jpg" #
+#plate_image = data_dir + "brown_plate" + str(plate_diam) + ".jpg" #
+#cloth_image = data_dir + cloth + str(plate_diam) + "_2.jpg" #
+#write_image = write_dir + cloth + str(plate_diam) + "_res.jpg" #
 resize_percentage = 0.3
 
-write_image = write_dir + cloth + ".jpg" #
+write_image = write_dir + cloth + "_res.jpg" #
 cloth_image = data_dir + cloth + ".jpg" #
-#cloth_image = "./test/blue_lines_v.jpg" #
 
-activate_print = True #
+activate_print = False #
 save_img = False #
 show_imgs = True
 
@@ -112,10 +111,32 @@ def get_px_cm_ratio(measured_plate_area):
 
     return px_cm
 
+def check_measurements_coherence(plate_area, cloth_total_area, cloth_measured_area):
+    
+    new_plate_area = plate_area
+    new_cloth_total_area = cloth_total_area
+    new_cloth_measured_area = cloth_measured_area
+
+    if(cloth_total_area < cloth_measured_area):
+    #Set cloth_measured_area to total (cloth_total_area is usually < than real cloth area due to usage, elasticity, etc)
+        print("\033[93mError: Cloth flat area is less than cloth measured area \033[0m")
+        new_cloth_measured_area = cloth_total_area
+    if(cloth_measured_area < plate_area):
+        print("\033[93mError: Cloth measured area is less than plate area \033[0m")
+    if(cloth_total_area < plate_area):
+        print("\033[93mError: Cloth flat area is less than plate area \033[0m")
+
+    return new_plate_area, new_cloth_total_area, new_cloth_measured_area
+
+
+
 def compute_drape_ratio(plate_area, cloth_total_area, cloth_measured_area):
 
     # Compute drape ratio
     drape = (cloth_measured_area-plate_area) / (cloth_total_area-plate_area)
+
+    print_info(activate_print, "Dividend: ", cloth_measured_area-plate_area)
+    print_info(activate_print, "Divisor: ", cloth_total_area-plate_area)
 
     return drape
 
@@ -156,6 +177,7 @@ if(all_files):
             cloth_total_area_cm = cloth_dims[0]*cloth_dims[1]
             print("Plate real area (cm2): ", plate_area_cm)
             print("Cloth real area (cm): ", cloth_total_area_cm)
+            plate_area_cm, cloth_total_area_cm, cloth_measured_area_cm = check_measurements_coherence(plate_area_cm, cloth_total_area_cm, cloth_measured_area_cm)
 
             ## Compute drape
             drape_ratio = compute_drape_ratio(plate_area_cm, cloth_total_area_cm, cloth_measured_area_cm)
@@ -176,7 +198,8 @@ else:
     print("Cloth measured area (cm): ", cloth_measured_area_cm)
     cloth_total_area_cm = cloth_dims[0]*cloth_dims[1]
     print("Plate real area (cm2): ", plate_area_cm)
-    print("Cloth real area (cm): ", cloth_total_area_cm)
+    print("Cloth real area (cm2): ", cloth_total_area_cm)
+    plate_area_cm, cloth_total_area_cm, cloth_measured_area_cm = check_measurements_coherence(plate_area_cm, cloth_total_area_cm, cloth_measured_area_cm)
     
     ## Compute drape
     drape_ratio = compute_drape_ratio(plate_area_cm, cloth_total_area_cm, cloth_measured_area_cm)
@@ -196,18 +219,6 @@ else:
 #https://www.geeksforgeeks.org/python-opencv-canny-function/
 #https://stackoverflow.com/questions/43009923/how-to-complete-close-a-contour-in-python-opencv
 
-
-## Process / Results
-# Pink sample has a lot of texture that is detected as edge by canny -> Necessary to change canny parameters. -> Solved using dilation and max area contour.
-# Blue sample detects clearly the contour but as two contours, so a dilation is necessary to join them in 1 contour and get the area.
-# Red sample finds well the contour but also some edges on the inside. Without dilation it detects the outer contour perfectly but with dilation (for blue sample) it joins the edges of the inside. -> Solved as pink sample
-# Yellow sample works perfect with and without dilation -> but if we change parameters (for pink sample) maybe not.
-
-###
-## To Do
-# OK - Close contours to get Area -> Dilation
-# Not necessary (previous problem was solved using max area instead of length) - Try another method to close contours -> Convex hull - https://answers.opencv.org/question/74777/how-to-use-approxpolydp-to-close-contours/
-# Generalization method for different textured samples + different lightnings
 
 #- Output failure in case measured cloth area > real cloth area or < plate area
 # - Poner imagen borrosa para que detecte mejor el borde y obvie texturas interiores

@@ -4,7 +4,7 @@ import cv2
 import math
 import csv
 
-activate_print=False
+activate_print=True
 show_imgs = True
 crop_images= False
 
@@ -224,7 +224,7 @@ def crop_img(img):
     return crop_img
 
 ## Test code
-test_img_path = './HCOS/pattern.jpg'
+test_img_path = './test/pattern.jpg'
 if(crop_images):
     imgg = cv2.imread(test_img_path)
     imgc = crop_img(imgg)
