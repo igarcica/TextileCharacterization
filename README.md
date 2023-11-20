@@ -15,12 +15,21 @@ Repository used in the article of the same title submitted to ICRA 2024. This re
 2. Save the images in a folder in the root folder with name "data".
 3. Use the image with the aruco pattern to compute the pixel to centimeter ratio:
 
-``pyython px_to_cm.py``
+``python px_to_cm.py``
 
-4. Compute the stiffness of the cloth object through their zenithal images:
+4. Compute the stiffness of the cloth object through their zenithal images. You will need to introduce the input file name (-i) , plate diamter used (-p) and cloth dimensions (-s)
 
-``python stiffness.py``
+``python stiffness.py -i <file_name> -p <plate_diam> -s <short_edge_length> <long_edge_length>``
 
+### Usage example
+
+Example for measuring the stiffness of the flat towel with dimensions 50x90cm, using a plate of 27cm diameter:
+
+``python stiffness.py -i towel_flat_27 -p 27 -s 50 90``
+
+## Terminal output
+
+Executing this command will provide the drape ratio percentage through terminal in green, as well as some useful information.
 
 ## Dependencies
 

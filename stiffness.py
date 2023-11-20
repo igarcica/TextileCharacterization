@@ -1,9 +1,10 @@
 import cv2
 import os
 import math
+import argparse
 
-data_dir = "./test/"
-write_dir = "./test/"
+data_dir = "./dif_folds_stiffness/"
+write_dir = "./dif_folds_stiffness_res/"
 
 all_files = False #
 cloth = "test" #
@@ -20,8 +21,29 @@ write_image = write_dir + cloth + "_res.jpg" #
 cloth_image = data_dir + cloth + ".jpg" #
 
 activate_print = False #
-save_img = False #
-show_imgs = True
+save_img = True #
+show_imgs = False
+
+#########################################################
+
+# Get image with Aruco layout
+ap = argparse.ArgumentParser()
+#ap.add_argument("-i", "--ar_input", required=True, help="path to input image containing ArUCo layout")
+ap.add_argument("-i", "--input", required=True, help="path to input image")
+ap.add_argument("-o", "--output", required=False, type=str, help="path to output folder")
+ap.add_argument("-p", "--plate", required=True, type=int, help="Plate diameter")
+ap.add_argument('-s', "--size", nargs='+', type=int, help='Cloth dimensions')
+#ap.add_argument("-tt", "--trial", required=True, type=int, default=1, help="Trial numbber")
+# number of correct corners
+args = vars(ap.parse_args())
+
+cloth_image = data_dir + args["input"] + ".jpg" 
+write_image = write_dir + args["input"] + "_res.jpg"
+cloth_dims = args["size"]
+plate_diam = args["plate"]
+print(cloth_dims)
+print(cloth_dims[0])
+
 
 #########################################################
 
@@ -203,7 +225,7 @@ else:
     
     ## Compute drape
     drape_ratio = compute_drape_ratio(plate_area_cm, cloth_total_area_cm, cloth_measured_area_cm)
-    print("\033[92m DRAPE RATIO (%): ", drape_ratio*100, " % \033[0m")
+    print("\033[92m DRAPE RATIO (%): ", round(drape_ratio*100, 1), " % \033[0m")
     ## Save image
     if(save_img):
         cv2.imwrite(write_image, contour_img)
