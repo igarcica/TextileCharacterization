@@ -25,16 +25,17 @@ Repository used in the article of the same title submitted to ICRA 2024. This re
 
 Example for measuring the stiffness of the flat towel with dimensions 50x90cm, using a plate of 27cm diameter:
 
-``python stiffness.py -i towel_flat_27 -p 27 -s 50 90``
+``python stiffness.py -i towel_flat_27 -p 27 -s 51 91``
 
 ## Terminal output
 
-Executing this command will provide the drape ratio percentage through terminal in green, as well as some useful information.
+The previous command will provide the drape ratio percentage (rigidity) through terminal in green, as well as some useful information.
 
 ## Dependencies
 
 - Python
 - OpenCV
+- CSV
 
 ## References
 

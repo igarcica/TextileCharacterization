@@ -1,7 +1,10 @@
 import cv2
+import csv
 import os
+import io
 import math
 import argparse
+import numpy as np
 
 data_dir = "./dif_folds_stiffness/"
 write_dir = "./dif_folds_stiffness_res/"
@@ -19,10 +22,15 @@ resize_percentage = 0.3
 
 write_image = write_dir + cloth + "_res.jpg" #
 cloth_image = data_dir + cloth + ".jpg" #
+csv_file = "./stiffness_data.csv"
+#my_file = open(csv_file, "w")
+#wr = csv.writer(my_file, delimiter=",", quoting=csv.QUOTE_NONNUMERIC)
 
 activate_print = False #
-save_img = True #
-show_imgs = False
+save_img = True #Save images with contour and CSV data
+show_imgs = True
+
+dilate = True
 
 #########################################################
 
@@ -39,11 +47,12 @@ args = vars(ap.parse_args())
 
 cloth_image = data_dir + args["input"] + ".jpg" 
 write_image = write_dir + args["input"] + "_res.jpg"
+cloth = args["input"]
 cloth_dims = args["size"]
 plate_diam = args["plate"]
-print(cloth_dims)
-print(cloth_dims[0])
 
+t_lower = 8900 #Lower Canny threshold
+t_upper = 560  #Upper Canny threshold
 
 #########################################################
 
@@ -53,13 +62,9 @@ def do_things(img):
 
     # convert the image to grayscale format
 #    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
-    # Setting parameter values
-    t_lower = 50  # Lower Threshold
-    t_upper = 150  # Upper threshold
       
     ## Applying the Canny Edge filter
-    edge = cv2.Canny(img, 5000, 150, apertureSize=5)
+    edge = cv2.Canny(img, t_lower, t_upper, apertureSize=5)
     if(show_imgs):
         cv2.imshow('original', img)
         cv2.imshow('edge', edge)
@@ -76,13 +81,15 @@ def do_things(img):
     #cv2.destroyAllWindows()
     
     #Dilate canny edges to join and close contours
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(2,2))
-    dilated = cv2.dilate(edge, kernel)
-    if(show_imgs):
-        cv2.imshow('dilated', dilated)
+    if(dilate):
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(2,2))
+        dilated = cv2.dilate(edge, kernel)
+        edge = dilated
+        if(show_imgs):
+            cv2.imshow('dilated', edge)
 
     # Find largest contour to filter noise
-    contours, hierarchy = cv2.findContours(dilated,cv2.RETR_TREE,cv2.CHAIN_APPROX_NONE)
+    contours, hierarchy = cv2.findContours(edge, cv2.RETR_TREE,cv2.CHAIN_APPROX_NONE)
     contour = max(contours, key = cv2.contourArea) #key=len
     
     contour_img = cv2.drawContours(img, contour, -1, (0,255,0), 3)
@@ -162,6 +169,46 @@ def compute_drape_ratio(plate_area, cloth_total_area, cloth_measured_area):
 
     return drape
 
+def save_data_csv(drape, measured_area):
+    # Read CSV files with groundtruth and results
+    #db = csv.reader(open(csv_file))
+    #data = []
+    #for rows in db:
+    #    data.append(rows)
+    #my_data = np.genfromtxt(csv_file, delimiter=',')
+    #print(my_data)
+    #my_data = np.append([my_data], [[3,2,1]])
+    #print(my_data)
+    #my_data=[1 2 3]
+    #np.savetxt("foo.csv", my_data, delimiter=",")
+
+    #headers = ["File", "short_size", "long_size", "drape", "measured_area_cm","plate_diam", "px_cm", "t_lower", "t_upper"]
+    #wr.writerow(headers)
+    db = csv.reader(open(csv_file))
+    database = np.empty([0,9])
+    #print(database)
+    n=0
+    #database = [1,1,1,1,1,1,1,1,1]
+    for row in db:
+        #print("row", row)
+        #wr.writerow(row)
+        #database[n] = row
+        #print(database)
+        database = np.vstack([database, row])
+        #print("dat", database)
+        #n+=1
+
+    data = [cloth, cloth_dims[0], cloth_dims[1], drape, measured_area, plate_diam, px_cm_ratio, t_lower, t_upper]
+    #wr.writerow(data)
+    database = np.vstack([database, data])
+    #database = np.append(database, [data])
+    #database[n]=data
+
+    #print("db", database)
+    #my_file2 = open("./hola.csv", "w")
+    #wr = csv.writer(my_file2, delimiter=",", quoting=csv.QUOTE_NONNUMERIC)
+    np.savetxt(csv_file, database, delimiter=",", fmt='%s')
+    
 
 def print_info(activate, arg1, arg2=""):
     if(activate):
@@ -221,14 +268,15 @@ else:
     cloth_total_area_cm = cloth_dims[0]*cloth_dims[1]
     print("Plate real area (cm2): ", plate_area_cm)
     print("Cloth real area (cm2): ", cloth_total_area_cm)
-    plate_area_cm, cloth_total_area_cm, cloth_measured_area_cm = check_measurements_coherence(plate_area_cm, cloth_total_area_cm, cloth_measured_area_cm)
+    plate_area_cm, cloth_total_area_cm, cloth_measured_area_cm_corr = check_measurements_coherence(plate_area_cm, cloth_total_area_cm, cloth_measured_area_cm)
     
     ## Compute drape
-    drape_ratio = compute_drape_ratio(plate_area_cm, cloth_total_area_cm, cloth_measured_area_cm)
+    drape_ratio = compute_drape_ratio(plate_area_cm, cloth_total_area_cm, cloth_measured_area_cm_corr)
     print("\033[92m DRAPE RATIO (%): ", round(drape_ratio*100, 1), " % \033[0m")
     ## Save image
     if(save_img):
         cv2.imwrite(write_image, contour_img)
+        save_data_csv(round(drape_ratio*100,1), round(cloth_measured_area_cm))
 
 
 
