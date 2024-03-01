@@ -12,7 +12,7 @@ canny_segm = True
 
 # Load image
 resize_percentage=0.3
-img = cv2.imread('./dif_folds_stiffness/check_flat_27.jpg')
+img = cv2.imread('./DOS/tank_white.jpg')
 image = cv2.resize(img, (int(img.shape[1]*resize_percentage),int(img.shape[0]*resize_percentage)), interpolation = cv2.INTER_AREA) 
 image2 = image
 
@@ -131,7 +131,7 @@ while(1):
         i = cv2.getTrackbarPos('i', 'Canny')
         get_contour = cv2.getTrackbarPos('get_contour', 'Canny')
         
-        img33 = cv2.imread('./dif_folds_stiffness/check_flat_27.jpg')
+        img33 = cv2.imread('./DOS/tank_white.jpg')
         image33 = cv2.resize(img33, (int(img33.shape[1]*resize_percentage),int(img33.shape[0]*resize_percentage)), interpolation = cv2.INTER_AREA) 
         result = canny_segmentation(image33, t_low, t_up, A, B)
     

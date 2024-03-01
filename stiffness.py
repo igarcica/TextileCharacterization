@@ -6,19 +6,19 @@ import math
 import argparse
 import numpy as np
 
-data_dir = "./dif_folds_stiffness/"
-write_dir = "./dif_folds_stiffness_res/"
+data_dir = "./DOS/"
+write_dir = "./DOS_res/"
 
 all_files = False #
 cloth = "test" #
 cloth_dims = (50,90) # Size of object to compute real area
 plate_diam = 27 #plate diameter
-px_cm_ratio = 295
+px_cm_ratio = 1061
 use_plate = False
 #plate_image = data_dir + "brown_plate" + str(plate_diam) + ".jpg" #
 #cloth_image = data_dir + cloth + str(plate_diam) + "_2.jpg" #
 #write_image = write_dir + cloth + str(plate_diam) + "_res.jpg" #
-resize_percentage = 0.3
+resize_percentage = 0.4
 
 write_image = write_dir + cloth + "_res.jpg" #
 cloth_image = data_dir + cloth + ".jpg" #
@@ -26,8 +26,8 @@ csv_file = "./stiffness_data.csv"
 #my_file = open(csv_file, "w")
 #wr = csv.writer(my_file, delimiter=",", quoting=csv.QUOTE_NONNUMERIC)
 
-activate_print = False #
-save_img = True #Save images with contour and CSV data
+activate_print = True #
+save_img = False #Save images with contour and CSV data
 show_imgs = True
 
 dilate = True
@@ -51,8 +51,8 @@ cloth = args["input"]
 cloth_dims = args["size"]
 plate_diam = args["plate"]
 
-t_lower = 8900 #Lower Canny threshold
-t_upper = 560  #Upper Canny threshold
+t_lower = 100 #Lower Canny threshold
+t_upper = 400  #Upper Canny threshold
 
 #########################################################
 
@@ -105,10 +105,13 @@ def do_things(img):
 
     cv2.waitKey(0)
 
+    # Compute perimenter in pixels
+    measured_perimeter = cv2.arcLength(contour, True)
+    print("Measured perimeter (px): ", measured_perimeter)
 
     # Compute AREA value
     measured_area = cv2.contourArea(contour)
-    print("Measured contour area: ", measured_area)
+    print("Measured contour area (px): ", measured_area)
 
     return measured_area, contour_img
 

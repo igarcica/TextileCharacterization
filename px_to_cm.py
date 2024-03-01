@@ -171,11 +171,8 @@ def get_px_cm_ratio(aruco_img_path, resize_percentage):
     img = cv2.imread(aruco_img_path) # Load image with aruco layout
     print_info(activate_print, "Original image dim: ", img.shape)
     #Resize image to fit screen
-    width = int(img.shape[1] * resize_percentage / 100)
-    height = int(img.shape[0] * resize_percentage / 100)
-    dim = (width, height)
-    img = cv2.resize(img, dim, interpolation = cv2.INTER_AREA) 
-    print_info(activate_print, "Resized image to ", resize_percentage, "% -> New dim: ", img.shape)
+    img = cv2.resize(img, (int(img.shape[1]*resize_percentage),int(img.shape[0]*resize_percentage)), interpolation = cv2.INTER_AREA) 
+    print_info(activate_print, "Resized image to ", resize_percentage*100, "% -> New dim: ", img.shape)
     
     # Load Aruco detector
     parameters = cv2.aruco.DetectorParameters_create()
@@ -188,7 +185,7 @@ def get_px_cm_ratio(aruco_img_path, resize_percentage):
     print_info(activate_print,"Aruco IDs: ", ids)
    
     for (markerCorner, markerID) in zip(corners, ids):
-        if(markerID==15):
+        if(markerID==14):
             # Draw polygon around the marker
             print(markerID)
             print(markerCorner)
@@ -224,14 +221,14 @@ def crop_img(img):
     return crop_img
 
 ## Test code
-test_img_path = './test/pattern.jpg'
+test_img_path = './DOS/aruco.jpg'
 if(crop_images):
     imgg = cv2.imread(test_img_path)
     imgc = crop_img(imgg)
-    write_image = './HCOS/cotton_napkin.jpg'
+    write_image = './DOS_cut/T_shirt_gray.jpg'
     cv2.imwrite(write_image, imgc)
 else:
-    px_cm_ratio, px_cm_area_ratio = get_px_cm_ratio(test_img_path, 30)
+    px_cm_ratio, px_cm_area_ratio = get_px_cm_ratio(test_img_path, 0.4)
 #px_cm_ratio, px_cm_area_ratio = transform_perspective(test_img_path,30)
 
 
