@@ -11,8 +11,8 @@ HSV_segm = False
 canny_segm = True
 
 # Load image
-resize_percentage=0.3
-img = cv2.imread('./DOS/tank_white.jpg')
+resize_percentage=0.4
+img = cv2.imread('./HCOS/checkered_rag.jpg')
 image = cv2.resize(img, (int(img.shape[1]*resize_percentage),int(img.shape[0]*resize_percentage)), interpolation = cv2.INTER_AREA) 
 image2 = image
 
@@ -131,10 +131,12 @@ while(1):
         i = cv2.getTrackbarPos('i', 'Canny')
         get_contour = cv2.getTrackbarPos('get_contour', 'Canny')
         
-        img33 = cv2.imread('./DOS/tank_white.jpg')
+        #img33 = cv2.imread('./DOS/tank_white.jpg')
+        img33=img
         image33 = cv2.resize(img33, (int(img33.shape[1]*resize_percentage),int(img33.shape[0]*resize_percentage)), interpolation = cv2.INTER_AREA) 
         result = canny_segmentation(image33, t_low, t_up, A, B)
-    
+        
+
         if((pt_low != t_low) | (pt_up != t_up) | (pvMin != vMin) | (phMax != hMax) | (psMax != sMax) | (pvMax != vMax) ):
             #first_run = True
             pt_low = t_low
@@ -147,6 +149,8 @@ while(1):
             cont_img = cv2.drawContours(image2, contour, -1, (0,255,0), 3)
             cv2.imshow('Contour', image2)
             result = cont_img
+            print("t_low:", A)
+            print("t_up: ", B)
         else:
             image2 = image33
 

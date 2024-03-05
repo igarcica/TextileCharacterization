@@ -221,14 +221,14 @@ def crop_img(img):
     return crop_img
 
 ## Test code
-test_img_path = './DOS/aruco.jpg'
+test_img_path = './HCOS/aruco.jpg'
 if(crop_images):
     imgg = cv2.imread(test_img_path)
     imgc = crop_img(imgg)
     write_image = './DOS_cut/T_shirt_gray.jpg'
     cv2.imwrite(write_image, imgc)
 else:
-    px_cm_ratio, px_cm_area_ratio = get_px_cm_ratio(test_img_path, 0.4)
+    px_cm_ratio, px_cm_area_ratio = get_px_cm_ratio(test_img_path, 0.3)
 #px_cm_ratio, px_cm_area_ratio = transform_perspective(test_img_path,30)
 
 

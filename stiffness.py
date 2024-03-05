@@ -6,19 +6,19 @@ import math
 import argparse
 import numpy as np
 
-data_dir = "./DOS/"
-write_dir = "./DOS_res/"
+data_dir = "./HCOS/"
+write_dir = "./HCOS_res/"
 
 all_files = False #
 cloth = "test" #
 cloth_dims = (50,90) # Size of object to compute real area
 plate_diam = 27 #plate diameter
-px_cm_ratio = 1061
+px_cm_ratio = 370
 use_plate = False
 #plate_image = data_dir + "brown_plate" + str(plate_diam) + ".jpg" #
 #cloth_image = data_dir + cloth + str(plate_diam) + "_2.jpg" #
 #write_image = write_dir + cloth + str(plate_diam) + "_res.jpg" #
-resize_percentage = 0.4
+resize_percentage = 0.3
 
 write_image = write_dir + cloth + "_res.jpg" #
 cloth_image = data_dir + cloth + ".jpg" #
@@ -51,8 +51,8 @@ cloth = args["input"]
 cloth_dims = args["size"]
 plate_diam = args["plate"]
 
-t_lower = 100 #Lower Canny threshold
-t_upper = 400  #Upper Canny threshold
+t_lower = 1000 #Lower Canny threshold
+t_upper = 0  #Upper Canny threshold
 
 #########################################################
 
@@ -82,6 +82,7 @@ def do_things(img):
     
     #Dilate canny edges to join and close contours
     if(dilate):
+        print("Dilated")
         kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(2,2))
         dilated = cv2.dilate(edge, kernel)
         edge = dilated
@@ -188,10 +189,10 @@ def save_data_csv(drape, measured_area):
     #headers = ["File", "short_size", "long_size", "drape", "measured_area_cm","plate_diam", "px_cm", "t_lower", "t_upper"]
     #wr.writerow(headers)
     db = csv.reader(open(csv_file))
-    database = np.empty([0,9])
+    database = np.empty([0,10])
     #print(database)
     n=0
-    #database = [1,1,1,1,1,1,1,1,1]
+    #database = [1,1,1,1,1,1,1,1,1,1]
     for row in db:
         #print("row", row)
         #wr.writerow(row)
@@ -201,7 +202,7 @@ def save_data_csv(drape, measured_area):
         #print("dat", database)
         #n+=1
 
-    data = [cloth, cloth_dims[0], cloth_dims[1], drape, measured_area, plate_diam, px_cm_ratio, t_lower, t_upper]
+    data = [cloth, drape, cloth_dims[0], cloth_dims[1], measured_area, plate_diam, px_cm_ratio, t_lower, t_upper, resize_percentage]
     #wr.writerow(data)
     database = np.vstack([database, data])
     #database = np.append(database, [data])
