@@ -1,13 +1,14 @@
 import cv2
 import os
 
-data_dir = "./AOS2/"
-write_dir = "./AOS3/"
+data_dir = "./EOS/"
+write_dir = "./EOS_cut/"
 save_img=True
 
 def crop_img(img):
     print("Original img size: ", img.shape)
-    crop_img = img[420:970,180:710]
+    #crop_img = img[420:970,180:710]
+    crop_img = img[1400:3575, 50:2950]
     print("Cropped image size: ", crop_img.shape)
     return crop_img
 

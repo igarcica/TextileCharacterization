@@ -6,8 +6,8 @@ import math
 import argparse
 import numpy as np
 
-data_dir = "./HCOS/"
-write_dir = "./HCOS_res/"
+data_dir = "./EOS_cut/"
+write_dir = "./EOS_res/"
 
 all_files = False #
 cloth = "test" #
@@ -27,8 +27,8 @@ csv_file = "./stiffness_data.csv"
 #wr = csv.writer(my_file, delimiter=",", quoting=csv.QUOTE_NONNUMERIC)
 
 activate_print = True #
-save_img = True #Save images with contour and CSV data
 show_imgs = True
+save_img = True #Save images with contour and CSV data
 
 dilate = True
 
@@ -52,7 +52,7 @@ cloth_dims = args["size"]
 plate_diam = args["plate"]
 
 t_lower = 0 #Lower Canny threshold
-t_upper = 400  #Upper Canny threshold
+t_upper = 1000  #Upper Canny threshold
 
 #########################################################
 

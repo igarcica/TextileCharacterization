@@ -12,7 +12,7 @@ canny_segm = True
 
 # Load image
 resize_percentage=0.3
-img = cv2.imread('./HCOS/rect_pillowc.jpg')
+img = cv2.imread('./EOS_cut/strange_print_v.jpg')
 image = cv2.resize(img, (int(img.shape[1]*resize_percentage),int(img.shape[0]*resize_percentage)), interpolation = cv2.INTER_AREA) 
 image2 = image
 
@@ -47,7 +47,7 @@ cv2.namedWindow('Canny')
 cv2.createTrackbar('t_lower', 'Canny', 0, 179, nothing)
 cv2.createTrackbar('t_upper', 'Canny', 0, 255, nothing)
 cv2.createTrackbar('A', 'Canny', 0, 50000, nothing)
-cv2.createTrackbar('B', 'Canny', 0, 1000, nothing)
+cv2.createTrackbar('B', 'Canny', 0, 10000, nothing)
 cv2.createTrackbar('i', 'Canny', 0, 150, nothing)
 cv2.createTrackbar('get_contour', 'Canny', 0,1, nothing)
 
@@ -55,7 +55,7 @@ cv2.createTrackbar('get_contour', 'Canny', 0,1, nothing)
 cv2.setTrackbarPos('t_lower', 'Canny', 50)
 cv2.setTrackbarPos('t_upper', 'Canny', 150)
 cv2.setTrackbarPos('A', 'Canny', 5000)
-cv2.setTrackbarPos('B', 'Canny', 150)
+cv2.setTrackbarPos('B', 'Canny', 5000)
 cv2.setTrackbarPos('i', 'Canny', 0)
 cv2.setTrackbarPos('get_contour', 'Canny', 0)
 

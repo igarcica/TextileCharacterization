@@ -216,16 +216,17 @@ def get_px_cm_ratio(aruco_img_path, resize_percentage):
 ##################################################################################################
 def crop_img(img):
     print("Original img size: ", img.shape)
-    crop_img = img[850:3600, 10:3000]
+    #crop_img = img[1450:3600, 10:3000]
+    crop_img = img[0:1575, 50:2950]
     print("Cropped image size: ", crop_img.shape)
     return crop_img
 
 ## Test code
-test_img_path = './HCOS/aruco.jpg'
+test_img_path = './EOS_cut/aruco.jpg'
 if(crop_images):
     imgg = cv2.imread(test_img_path)
     imgc = crop_img(imgg)
-    write_image = './DOS_cut/T_shirt_gray.jpg'
+    write_image = './EOS_cut/aruco.jpg'
     cv2.imwrite(write_image, imgc)
 else:
     px_cm_ratio, px_cm_area_ratio = get_px_cm_ratio(test_img_path, 0.3)
