@@ -27,7 +27,7 @@ csv_file = "./stiffness_data.csv"
 #wr = csv.writer(my_file, delimiter=",", quoting=csv.QUOTE_NONNUMERIC)
 
 activate_print = True #
-save_img = False #Save images with contour and CSV data
+save_img = True #Save images with contour and CSV data
 show_imgs = True
 
 dilate = True
@@ -51,8 +51,8 @@ cloth = args["input"]
 cloth_dims = args["size"]
 plate_diam = args["plate"]
 
-t_lower = 1000 #Lower Canny threshold
-t_upper = 0  #Upper Canny threshold
+t_lower = 0 #Lower Canny threshold
+t_upper = 400  #Upper Canny threshold
 
 #########################################################
 

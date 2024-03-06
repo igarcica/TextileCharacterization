@@ -1,7 +1,7 @@
 
 Institut de Robòtica i Informàtica Industrial, CSIC-UPC. Author Irene Garcia-Camacho (igarcia@iri.upc.edu).
 
-# Standardization of cloth objects and its relevance in robotic manipulation
+# Standardization of Cloth Objects and its Relevance in Robotic mManipulation
 
 Repository used in the article of the same title submitted to ICRA 2024. This respository includes the necessary packages to measure the stiffness of the cloth objects based on the drape test [1], adapted for robotic applications. It serves to measure the drape area of the cloth and the corresponding stiffness metric, independently of the camera brand or setup. It includes two scripts:
 

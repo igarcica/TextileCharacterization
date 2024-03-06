@@ -11,8 +11,8 @@ HSV_segm = False
 canny_segm = True
 
 # Load image
-resize_percentage=0.4
-img = cv2.imread('./HCOS/checkered_rag.jpg')
+resize_percentage=0.3
+img = cv2.imread('./HCOS/rect_pillowc.jpg')
 image = cv2.resize(img, (int(img.shape[1]*resize_percentage),int(img.shape[0]*resize_percentage)), interpolation = cv2.INTER_AREA) 
 image2 = image
 
