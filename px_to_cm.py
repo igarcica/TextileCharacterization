@@ -4,8 +4,9 @@ import cv2
 import math
 import csv
 
-activate_print=False
+activate_print=True
 show_imgs = True
+crop_images= False
 
 
 ##################################################################################################
@@ -170,11 +171,8 @@ def get_px_cm_ratio(aruco_img_path, resize_percentage):
     img = cv2.imread(aruco_img_path) # Load image with aruco layout
     print_info(activate_print, "Original image dim: ", img.shape)
     #Resize image to fit screen
-    width = int(img.shape[1] * resize_percentage / 100)
-    height = int(img.shape[0] * resize_percentage / 100)
-    dim = (width, height)
-    img = cv2.resize(img, dim, interpolation = cv2.INTER_AREA) 
-    print_info(activate_print, "Resized image to ", resize_percentage, "% -> New dim: ", img.shape)
+    img = cv2.resize(img, (int(img.shape[1]*resize_percentage),int(img.shape[0]*resize_percentage)), interpolation = cv2.INTER_AREA) 
+    print_info(activate_print, "Resized image to ", resize_percentage*100, "% -> New dim: ", img.shape)
     
     # Load Aruco detector
     parameters = cv2.aruco.DetectorParameters_create()
@@ -187,7 +185,7 @@ def get_px_cm_ratio(aruco_img_path, resize_percentage):
     print_info(activate_print,"Aruco IDs: ", ids)
    
     for (markerCorner, markerID) in zip(corners, ids):
-        if(markerID==13):
+        if(markerID==14):
             # Draw polygon around the marker
             print(markerID)
             print(markerCorner)
@@ -218,15 +216,21 @@ def get_px_cm_ratio(aruco_img_path, resize_percentage):
 ##################################################################################################
 def crop_img(img):
     print("Original img size: ", img.shape)
-    crop_img = img[800:2800, 870:2370]
+    #crop_img = img[1450:3600, 10:3000]
+    crop_img = img[0:1575, 50:2950]
     print("Cropped image size: ", crop_img.shape)
     return crop_img
 
 ## Test code
-test_img_path = './test/denim_v.jpg'
-px_cm_ratio, px_cm_area_ratio = get_px_cm_ratio(test_img_path, 30)
+test_img_path = './EOS_cut/aruco.jpg'
+if(crop_images):
+    imgg = cv2.imread(test_img_path)
+    imgc = crop_img(imgg)
+    write_image = './EOS_cut/aruco.jpg'
+    cv2.imwrite(write_image, imgc)
+else:
+    px_cm_ratio, px_cm_area_ratio = get_px_cm_ratio(test_img_path, 0.3)
 #px_cm_ratio, px_cm_area_ratio = transform_perspective(test_img_path,30)
-
 
 
 
