@@ -1,4 +1,3 @@
-
 Institut de Robòtica i Informàtica Industrial, CSIC-UPC. Author Irene Garcia-Camacho (igarcia@iri.upc.edu).
 
 # Standardization of Cloth Objects and its Relevance in Robotic mManipulation
@@ -36,6 +35,7 @@ The previous command will provide the drape ratio percentage (rigidity) through 
 - Python
 - OpenCV
 - CSV
+
 
 ## References
 
