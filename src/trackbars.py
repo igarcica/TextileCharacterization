@@ -1,67 +1,68 @@
-# Source: https://stackoverflow.com/questions/10948589/choosing-the-correct-upper-and-lower-hsv-boundaries-for-color-detection-withcv
 import cv2
 import numpy as np
+import argparse
+import sys
 
 def nothing(x):
     pass
 
-# Variables
-show_imgs=True
-HSV_segm = False
-canny_segm = True
+## Variables
+show_imgs = True
+HSV_segm = True
+canny_segm = False
+resize_percentage = 0.3
 
-# Load image
-resize_percentage=0.3
-img = cv2.imread('./EOS_cut/strange_print_v.jpg')
-image = cv2.resize(img, (int(img.shape[1]*resize_percentage),int(img.shape[0]*resize_percentage)), interpolation = cv2.INTER_AREA) 
-image2 = image
+ap = argparse.ArgumentParser()
+ap.add_argument("-i", "--input", required=True, help="path to input image")
+args = vars(ap.parse_args())
 
-#### Slides for HSV segmentation ####
-# Create a window
-cv2.namedWindow('image')
+## Load image
+image_path = "./data/" + args["input"]
+img = cv2.imread(image_path)
+image_or = cv2.resize(img, (int(img.shape[1]*resize_percentage),int(img.shape[0]*resize_percentage)), interpolation = cv2.INTER_AREA) 
+image2 = image_or
 
-# Create trackbars for color change
-# Hue is from 0-179 for Opencv
-cv2.createTrackbar('HMin', 'image', 0, 179, nothing)
-cv2.createTrackbar('SMin', 'image', 0, 255, nothing)
-cv2.createTrackbar('VMin', 'image', 0, 255, nothing)
-cv2.createTrackbar('HMax', 'image', 0, 179, nothing)
-cv2.createTrackbar('SMax', 'image', 0, 255, nothing)
-cv2.createTrackbar('VMax', 'image', 0, 255, nothing)
+if(HSV_segm):
+    #### Slides for HSV segmentation ####
+    # Create a window
+    cv2.namedWindow('image')
 
-# Set default value for Max HSV trackbars
-cv2.setTrackbarPos('HMax', 'image', 179)
-cv2.setTrackbarPos('SMax', 'image', 255)
-cv2.setTrackbarPos('VMax', 'image', 255)
+    # Create trackbars for color change
+    # Hue is from 0-179 for Opencv
+    cv2.createTrackbar('HMin', 'image', 0, 179, nothing)
+    cv2.createTrackbar('SMin', 'image', 0, 255, nothing)
+    cv2.createTrackbar('VMin', 'image', 0, 255, nothing)
+    cv2.createTrackbar('HMax', 'image', 0, 179, nothing)
+    cv2.createTrackbar('SMax', 'image', 0, 255, nothing)
+    cv2.createTrackbar('VMax', 'image', 0, 255, nothing)
 
-# Initialize HSV min/max values
-hMin = sMin = vMin = hMax = sMax = vMax = 0
-phMin = psMin = pvMin = phMax = psMax = pvMax = 0
+    # Set default value for Max HSV trackbars
+    cv2.setTrackbarPos('HMax', 'image', 179)
+    cv2.setTrackbarPos('SMax', 'image', 255)
+    cv2.setTrackbarPos('VMax', 'image', 255)
 
-#### Slides for Canny segmentation ####
-# Create a window
-cv2.namedWindow('Canny')
+    # Initialize HSV min/max values
+    hMin = sMin = vMin = hMax = sMax = vMax = 0
+    phMin = psMin = pvMin = phMax = psMax = pvMax = 0
 
-# Create trackbars for color change
-# Hue is from 0-179 for Opencv
-cv2.createTrackbar('t_lower', 'Canny', 0, 179, nothing)
-cv2.createTrackbar('t_upper', 'Canny', 0, 255, nothing)
-cv2.createTrackbar('A', 'Canny', 0, 50000, nothing)
-cv2.createTrackbar('B', 'Canny', 0, 10000, nothing)
-cv2.createTrackbar('i', 'Canny', 0, 150, nothing)
-cv2.createTrackbar('get_contour', 'Canny', 0,1, nothing)
+if(canny_segm):
+    #### Slides for Canny segmentation ####
+    cv2.namedWindow('Canny') # Create a window
 
-# Set default value for Max HSV trackbars
-cv2.setTrackbarPos('t_lower', 'Canny', 50)
-cv2.setTrackbarPos('t_upper', 'Canny', 150)
-cv2.setTrackbarPos('A', 'Canny', 5000)
-cv2.setTrackbarPos('B', 'Canny', 5000)
-cv2.setTrackbarPos('i', 'Canny', 0)
-cv2.setTrackbarPos('get_contour', 'Canny', 0)
+    # Create trackbars for color change
+    # Hue is from 0-179 for Opencv
+    cv2.createTrackbar('t_lower', 'Canny', 0, 5000, nothing)
+    cv2.createTrackbar('t_upper', 'Canny', 0, 5000, nothing)
+    cv2.createTrackbar('get_contour', 'Canny', 0,1, nothing)
 
-pt_low = pt_up = 0
+    # Set default value for Max HSV trackbars
+    cv2.setTrackbarPos('t_lower', 'Canny', 0)
+    cv2.setTrackbarPos('t_upper', 'Canny', 1000)
+    cv2.setTrackbarPos('get_contour', 'Canny', 0)
 
-first_run = True
+    pt_low = pt_up = 0
+
+#first_run = True
 
 
 def HSV_segmentation(hMin, sMin, vMin, hMax, sMax, vMax):
@@ -70,23 +71,19 @@ def HSV_segmentation(hMin, sMin, vMin, hMax, sMax, vMax):
     upper = np.array([hMax, sMax, vMax])
 
     # Convert to HSV format and color threshold
-    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    hsv = cv2.cvtColor(image_or, cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv, lower, upper)
-    result = cv2.bitwise_and(image, image, mask=mask)
+    result = cv2.bitwise_and(image_or, image_or, mask=mask)
 
     return result
 
-def canny_segmentation(input_img, t_low, t_up, A, B):
+def canny_segmentation(input_img, t_low, t_up):
 
     ## convert the image to grayscale format
     # img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
-    # Setting parameter values
-    t_lower = t_low  # Lower Threshold
-    t_upper = t_up  # Upper threshold
       
     ## Applying the Canny Edge filter
-    edge = cv2.Canny(input_img, A, B, apertureSize=5)
+    edge = cv2.Canny(input_img, t_low, t_up, apertureSize=5)
     
     #Dilate canny edges to join and close contours
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(2,2))
@@ -126,38 +123,38 @@ while(1):
     if(canny_segm):
         t_low = cv2.getTrackbarPos('t_lower', 'Canny')
         t_up = cv2.getTrackbarPos('t_upper', 'Canny')
-        A = cv2.getTrackbarPos('A', 'Canny')
-        B = cv2.getTrackbarPos('B', 'Canny')
-        i = cv2.getTrackbarPos('i', 'Canny')
         get_contour = cv2.getTrackbarPos('get_contour', 'Canny')
         
-        #img33 = cv2.imread('./DOS/tank_white.jpg')
-        img33=img
-        image33 = cv2.resize(img33, (int(img33.shape[1]*resize_percentage),int(img33.shape[0]*resize_percentage)), interpolation = cv2.INTER_AREA) 
-        result = canny_segmentation(image33, t_low, t_up, A, B)
+        image2 = cv2.resize(img, (int(img.shape[1]*resize_percentage),int(img.shape[0]*resize_percentage)), interpolation = cv2.INTER_AREA) 
+        result = canny_segmentation(image2, t_low, t_up)
         
-
-        if((pt_low != t_low) | (pt_up != t_up) | (pvMin != vMin) | (phMax != hMax) | (psMax != sMax) | (pvMax != vMax) ):
-            #first_run = True
+        if((pt_low != t_low) | (pt_up != t_up) ):
             pt_low = t_low
             pt_up = t_up
 
         # Find largest contour to filter noise
         if(get_contour):
+            image3 = image2
             contours, hierarchy = cv2.findContours(result, cv2.RETR_TREE,cv2.CHAIN_APPROX_NONE)
+            if(len(contours)<1):
+                print("\033[91m[ERROR] No contours detected!\033[0m")
+                sys.exit(0)
             contour = max(contours, key = cv2.contourArea) #key=len
-            cont_img = cv2.drawContours(image2, contour, -1, (0,255,0), 3)
-            cv2.imshow('Contour', image2)
+            cont_img = cv2.drawContours(image3, contour, -1, (0,255,0), 3)
+            # cv2.imshow('Contour', image3)
             result = cont_img
-            print("t_low:", A)
-            print("t_up: ", B)
+            print("t_low:", t_low)
+            print("t_up: ", t_up)
         else:
-            image2 = image33
+            image3 = image2
 
         # Display result image
-        cv2.imshow('edge', result)
-        cv2.imshow('original', image)
+        cv2.imshow('Canny', result)
         if cv2.waitKey(10) & 0xFF == ord('q'):
             break
 
 cv2.destroyAllWindows()
+
+
+## REFS
+#https://stackoverflow.com/questions/10948589/choosing-the-correct-upper-and-lower-hsv-boundaries-for-color-detection-withcv
