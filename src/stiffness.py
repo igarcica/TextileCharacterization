@@ -9,9 +9,9 @@ data_dir = "./data/"
 write_dir = "./results/"
 
 px_cm_ratio = 370 # Pixel to centimeter ratio, obtained with px_to_cm.py
-t_lower = 0 # Lower Canny threshold
-t_upper = 1000  # Upper Canny threshold
-resize_percentage = 0.3 # Resize image so it can be seen in computer
+t_lower = 400 # Lower Canny threshold #1400 #580
+t_upper = 1000  # Upper Canny threshold #4000 #2200
+resize_percentage = 0.2 # Resize image so it can be seen in computer
 
 csv_file = "./results/stiffness_data.csv"
 
@@ -212,6 +212,7 @@ cloth_measured_area, contour_img = measure_draped_area(img)
     
 ## Obtain measured rapped area in centimeters (A3)
 px_cm_ratio = get_px_cm_ratio(aruco_image_path)
+print("Px to cm ratio: ", px_cm_ratio)
 cloth_measured_area_cm = cloth_measured_area/px_cm_ratio
 plate_area_cm, cloth_total_area_cm, cloth_measured_area_cm_corr = check_measurements_coherence(plate_area_cm, cloth_total_area_cm, cloth_measured_area_cm)
 print("A1 - Cloth real area (cm2): ", cloth_total_area_cm)

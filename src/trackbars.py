@@ -8,8 +8,8 @@ def nothing(x):
 
 ## Variables
 show_imgs = True
-HSV_segm = True
-canny_segm = False
+HSV_segm = False
+canny_segm = True
 resize_percentage = 0.3
 
 ap = argparse.ArgumentParser()
@@ -21,6 +21,8 @@ image_path = "./data/" + args["input"]
 img = cv2.imread(image_path)
 image_or = cv2.resize(img, (int(img.shape[1]*resize_percentage),int(img.shape[0]*resize_percentage)), interpolation = cv2.INTER_AREA) 
 image2 = image_or
+
+dilate = True
 
 if(HSV_segm):
     #### Slides for HSV segmentation ####
@@ -86,8 +88,11 @@ def canny_segmentation(input_img, t_low, t_up):
     edge = cv2.Canny(input_img, t_low, t_up, apertureSize=5)
     
     #Dilate canny edges to join and close contours
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(2,2))
-    dilated = cv2.dilate(edge, kernel)
+    if(dilate):
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(2,2))
+        dilated = cv2.dilate(edge, kernel)
+    else:
+        dilated = edge
     
 
     return dilated
