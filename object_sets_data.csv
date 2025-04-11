@@ -1,0 +1,10 @@
+,Elastic Object Set (EOS),Houehold Cloth Object Set (HCOS),Dressing Object Set (DOS),Range
+Friction,63,31,14,100
+Construction,2,2,2,3
+Color,23,5,4,35
+Size,31,250,87,400
+Weight,24,704,442,1000
+Shape,1,3,6,10
+Material,7,2,4,10
+Elasticity,106,22,103,150
+Stiffness,53,71,67,100
