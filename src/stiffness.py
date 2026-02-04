@@ -4,6 +4,9 @@ import sys
 import math
 import argparse
 import numpy as np
+import contour_annotation as contour_an
+
+print(cv2.__version__)
 
 data_dir = "./data/"
 write_dir = "./results/"
@@ -26,6 +29,7 @@ dilate = True
 ap = argparse.ArgumentParser()
 ap.add_argument("-a", "--aruco", required=True, help="path to aruco image")
 ap.add_argument("-i", "--input", required=True, help="path to input image")
+ap.add_argument("-ii", "--flat", required=True, help="path to flat object image")
 #ap.add_argument("-o", "--output", required=False, type=str, help="path to output folder")
 ap.add_argument("-p", "--plate", required=True, type=int, help="Plate diameter")
 ap.add_argument('-s', "--size", required=True, nargs=2, type=int, help='Cloth dimensions')
@@ -33,12 +37,16 @@ args = vars(ap.parse_args())
 
 aruco = args["aruco"]
 cloth = args["input"]
+flat_cloth = args["flat"]
 plate_diam = args["plate"]
 cloth_dims = args["size"]
 
 cloth_image_path = data_dir + args["input"]
 write_image_path = write_dir + args["input"]
+flat_cloth_image_path = data_dir + args["flat"]
 aruco_image_path = data_dir + args["aruco"]
+
+plate_image_path = data_dir + "Julia2/circle.jpg"
 
 try:
     with open(cloth_image_path) as f:
@@ -96,7 +104,7 @@ def measure_draped_area(img):
 
     # Compute AREA value
     measured_area = cv2.contourArea(contour)
-    print_info(activate_print, "Measured contour area (px): ", measured_area)
+    print_info(True, "Measured contour area (px): ", measured_area)
 
     return measured_area, contour_img
 
@@ -198,6 +206,9 @@ def print_info(activate, arg1, arg2=""):
 
 #########################################################
 
+
+
+
 ## Compute plate area (A2)
 plate_real_area_cm = math.pi*pow((plate_diam/2),2)
 plate_area_cm = plate_real_area_cm
@@ -205,11 +216,30 @@ plate_area_cm = plate_real_area_cm
 ## Compute cloth reat area (A1)
 cloth_total_area_cm = cloth_dims[0]*cloth_dims[1]
 
+## Measure area of flat object in pixels
+print("\033[94mMeasuring flat area of \033[0m", flat_cloth_image_path)
+flat_img = cv2.imread(flat_cloth_image_path)
+flat_cloth_measured_area, flat_contour_img = measure_draped_area(flat_img)
+## MAnual
+# flat_img = cv2.imread(flat_cloth_image_path) # Load image with aruco layout
+# flat_img = cv2.resize(flat_img, (int(flat_img.shape[1]*resize_percentage),int(flat_img.shape[0]*resize_percentage)), interpolation = cv2.INTER_AREA) 
+# flat_contour_img, u_cloth_per_px, flat_cloth_measured_area, u_vertices = contour_an.draw_contour(flat_img)
+
 ## Measure draped area in pixels
 print("\033[94mMeasuring drape area of \033[0m", cloth_image_path)
 img = cv2.imread(cloth_image_path)
 cloth_measured_area, contour_img = measure_draped_area(img)
-    
+## Manual
+# img = cv2.imread(cloth_image_path) # Load image with aruco layout
+# img = cv2.resize(img, (int(img.shape[1]*resize_percentage),int(img.shape[0]*resize_percentage)), interpolation = cv2.INTER_AREA) 
+# contour_img, u_cloth_per_px, cloth_measured_area, u_vertices = contour_an.draw_contour(img)
+
+## Measure circle area in pixels
+print("\033[94mMeasuring drape area of \033[0m", plate_image_path)
+aruco_img = cv2.imread(plate_image_path)
+plate_measured_area, plate_contour_img = measure_draped_area(aruco_img)
+
+
 ## Obtain measured rapped area in centimeters (A3)
 px_cm_ratio = get_px_cm_ratio(aruco_image_path)
 print("Px to cm ratio: ", px_cm_ratio)
@@ -220,8 +250,26 @@ print("A2 - Plate real area (cm2): ", plate_area_cm)
 print("A3 - Cloth measured area (cm): ", cloth_measured_area_cm)
 
 ## Compute drape
-drape_ratio = compute_drape_ratio(plate_area_cm, cloth_total_area_cm, cloth_measured_area_cm_corr)
+drape_ratio = compute_drape_ratio(plate_area_cm, cloth_total_area_cm, cloth_measured_area_cm)
+print("A1 - Cloth real area (cm2): ", cloth_total_area_cm)
+print("A2 - Plate real area (cm2): ", plate_area_cm)
+print("A3 - Cloth measured area (cm): ", cloth_measured_area_cm)
 print("\033[92m ---DRAPE RATIO: ", round(drape_ratio*100, 1), " % ---\033[0m")
+
+flat_cloth_measured_area_cm = flat_cloth_measured_area/px_cm_ratio
+flat_drape_ratio = compute_drape_ratio(plate_area_cm, flat_cloth_measured_area_cm, cloth_measured_area_cm)
+print("A1 - Cloth measured area (cm2): ", flat_cloth_measured_area_cm)
+print("A2 - Plate area (cm2): ", plate_area_cm)
+print("A3 - Cloth measured area (cm): ", cloth_measured_area_cm)
+print("\033[92m ---DRAPE RATIO: ", round(flat_drape_ratio*100, 1), " % ---\033[0m")
+
+plate_measured_area_cm = plate_measured_area/px_cm_ratio
+full_drape_ratio = compute_drape_ratio(plate_measured_area_cm, flat_cloth_measured_area_cm, cloth_measured_area_cm)
+print("A1 - Cloth real area (cm2): ", flat_cloth_measured_area_cm)
+print("A2 - Plate real area (cm2): ", plate_measured_area_cm)
+print("A3 - Cloth measured area (cm): ", cloth_measured_area_cm)
+print("\033[92m ---DRAPE RATIO: ", round(full_drape_ratio*100, 1), " % ---\033[0m")
+
 ## Save image
 if(save_img):
     cv2.imwrite(write_image_path, contour_img)
