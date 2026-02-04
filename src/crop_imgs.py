@@ -3,7 +3,7 @@ import os
 
 data_dir = "./EOS/"
 write_dir = "./EOS_cut/"
-save_img=True
+save_img=False
 
 def crop_img(img):
     print("Original img size: ", img.shape)

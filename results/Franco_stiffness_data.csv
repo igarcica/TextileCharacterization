@@ -1,0 +1,13 @@
+object,stiffness,short,long,measured_area,plate,px_to_cm,t_low,t_up,resize
+Franco/woolA3.jpg,12.9,30,42,384,18,248,400,1000,0.2
+Franco/denimA3.jpg,20.3,30,40,446,18,248,400,1000,0.2
+Franco/cottonA3.jpg,43.7,30,42,694,18,248,400,1000,0.2
+Franco/polyA3.jpg,7.6,30,43,333,18,248,400,1000,0.2
+Franco/woolA2_folded.jpg,15.8,30,43,418,18,248,400,1000,0.2
+Franco/denimA2_folded.jpg,20.1,31,42,465,18,248,400,1000,0.2
+Franco/cottonA2_folded.jpg,49,28,42,706,18,248,400,1000,0.2
+Franco/polyA2_folded.jpg,11.1,30,43,369,18,248,400,1000,0.2
+Franco/woolA2.jpg,5.8,43,59,609,25,248,400,1000,0.2
+Franco/denimA2.jpg,8,42,62,660,25,248,400,1000,0.2
+Franco/cottonA2.jpg,24.4,42,56,945,25,248,400,1000,0.2
+Franco/polyA2.jpg,4.3,43,60,580,25,248,400,1000,0.2
