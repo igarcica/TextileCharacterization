@@ -4,11 +4,11 @@
     <a href="http://www.iri.upc.edu/groups/perception/#ClothStandardization">
       <img src="https://img.shields.io/badge/Website-grey">
     </a>
-    <a href="https://arxiv.org/abs/2403.04608">
+    <!-- <a href="https://arxiv.org/abs/2403.04608">
       <img src="https://img.shields.io/badge/Arxiv-2403.04608-red">
-    </a>
-    <a href="https://2024.ieee-icra.org/">
-      <img src="https://img.shields.io/badge/Conference-ICRA 2024-green">
+    </a> -->
+    <a href="https://ieeexplore.ieee.org/document/10610630">
+      <img src="https://img.shields.io/badge/ICRA 2024-Article-green">
     </a>
   </p>
 </div>
@@ -27,29 +27,35 @@ Contact: Irene Garcia-Camacho (igarcia@iri.upc.edu)
 
 ## Getting Started
 
-The respository includes the necessary packages to measure the stiffness of cloth objects based on the drape test [1], adapted to robotic applications, and independently of the camera brand or setup. The package has the following structure:
+The respository includes the necessary packages to measure the stiffness of cloth objects based on the Cusick drape test, adapted to robotic applications, and independently of the camera brand or setup. The package has the following structure:
 
 - **/data** includes the database with zenithal photos of the draped clothes, the resulting images and the stiffness results in CSV files.
 - **/src** contains the necessary scripts to compute the stiffness:
     - `stiffness.py` Script to measure the stiffness value of the garment.
     - `trackbars.py` Script to obtain segmentation thresholds.
+    - `contour_annotation.py` Script to select the segmentation of the cloth manually.
+    - `radar_chart.py` Script to create the radar chart.
+    
 
 
 ## Execution
 
 1. Follow the steps to setup the camera, aruco pattern and cloth objects and take zenithal color images.
-2. Save the images in a folder with name "data".
+2. Save the images inside the folder "/data".
 3. Compute the stiffness of the cloth object through its zenithal image. You will need to introduce the aruco image file (-a), the cloth image file (-i), plate diamter used (-p) and cloth dimensions (-s).
 
 ```
 python3 src/stiffness.py -a <aruco_image> -i <cloth_image> -p <plate_diam> -s <short_edge_length> <long_edge_length>
 ```
 
-If necessary, use before the `trackbars.py` script to obtain a better segmentation by sliding the threshold trackbars until the contour of the drapped cloth is correctly detected. Use the obtained values in the `stiffness.py` file as t_lower and t_upper values.
+If necessary, use before the `trackbars.py` script to obtain a better segmentation by sliding the threshold trackbars until the contour of the drapped cloth is correctly detected. Use the obtained values in the `stiffness.py` file as t_lower and t_upper values. 
 
 ```
 python3 src/trackbars.py -i EOS/black_flowers_v.jpg
 ```
+
+For complex cases (such as transparent or patterned materials), you can use the script `contour_annotation.py` to manually select the contour. 
+
 
 4. Repeat step 3 for each garment. The resulting stiffness values will be saved on the `stiffness_data.csv` file, along with other useful information.
 
@@ -65,12 +71,40 @@ python3 src/stiffness.py -a EOS/aruco.jpg -i EOS/black_flowers_v.jpg -p 10 -s 17
 
 The previous command will provide the drape ratio percentage (rigidity) through terminal in green, as well as some useful information. -->
 
+## Build your radar chart
+
+Once you have the measures of your cloth set, you can visualize them in a radar chart. 
+
+
+```
+python3 src/radar_chart.py
+```
+
 ## Dependencies
 
 - Python3
 - OpenCV
 - CSV
+- Pandas
 
-## References
+<!-- ## References
 
-[1] C.G.E., "The measurement of fabric drape", Journal of the Textile Institute, vol. 59, pp. 253-260, 1968.
+[1] C.G.E., "The measurement of fabric drape", Journal of the Textile Institute, vol. 59, pp. 253-260, 1968. -->
+
+
+## Citation
+
+If you use this code or the measurement framework to characterize your object set, please use the following BibTex entry:
+
+```
+@INPROCEEDINGS{garcia-camacho2024standardization,
+  author={Garcia-Camacho, Irene and Longhini, Alberta and Welle, Michael and Alenyà, Guillem and Kragic, Danica and Borràs, Júlia},
+  booktitle={2024 IEEE International Conference on Robotics and Automation (ICRA)}, 
+  title={Standardization of Cloth Objects and its Relevance in Robotic Manipulation}, 
+  year={2024},
+  volume={},
+  number={},
+  pages={8298-8304},
+  keywords={Benchmarking,Cloth;Manipulation;Standardization;Friction;Elasticity;Stiffness},
+  doi={10.1109/ICRA57147.2024.10610630}}
+```

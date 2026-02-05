@@ -114,8 +114,8 @@ ax.set_varlabels(properties) #Axes names (properties)
 
 
 # Axis range annotations
-# for angle, max_val in zip(theta, axis_max):
-#     ax.text(angle, 0.75, str(max_val), ha='center', va='center', fontsize=12)
+for angle, max_val in zip(theta, axis_max):
+    ax.text(angle, 0.85, str(max_val), ha='center', va='center', fontsize=12)
 
 plt.show()
 

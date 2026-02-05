@@ -6,17 +6,15 @@ import argparse
 import numpy as np
 import contour_annotation as contour_an
 
-print(cv2.__version__)
 
+########## INPUT ##########
 data_dir = "./data/"
 write_dir = "./results/"
+csv_file = "./results/stiffness_data.csv" #CSV file where to save the results
 
-px_cm_ratio = 370 # Pixel to centimeter ratio, obtained with px_to_cm.py
 t_lower = 400 # Lower Canny threshold #1400 #580
 t_upper = 1000  # Upper Canny threshold #4000 #2200
 resize_percentage = 0.2 # Resize image so it can be seen in computer
-
-csv_file = "./results/stiffness_data.csv"
 
 activate_print = False # Print complementary info
 show_imgs = True # Open contour image
@@ -41,19 +39,23 @@ flat_cloth = args["flat"]
 plate_diam = args["plate"]
 cloth_dims = args["size"]
 
+
 cloth_image_path = data_dir + args["input"]
 write_image_path = write_dir + args["input"]
 flat_cloth_image_path = data_dir + args["flat"]
 aruco_image_path = data_dir + args["aruco"]
 
-plate_image_path = data_dir + "Julia2/circle.jpg"
+# plate_image_path = data_dir + "circle.jpg" #Path to an image with a plate to measure plate diameter
 
-try:
-    with open(cloth_image_path) as f:
-        pass
-except FileNotFoundError:
-    print("\033[91m[ERROR]\033[0m Image {} does not exist".format(args["input"]))
-    sys.exit(0)
+### Check if the files exist
+files_to_check = [aruco_image_path, cloth_image_path, flat_cloth_image_path]
+for path in files_to_check:
+    try:
+        with open(path):
+            pass
+    except FileNotFoundError:
+        print(f"\033[91m[ERROR]\033[0m Image {path} does not exist")
+        sys.exit(1)
 
 
 #########################################################
@@ -97,6 +99,7 @@ def measure_draped_area(img):
     # cv2.imshow("Convex", img2)
 
     cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
     # Compute perimenter in pixels
     measured_perimeter = cv2.arcLength(contour, True)
@@ -104,37 +107,36 @@ def measure_draped_area(img):
 
     # Compute AREA value
     measured_area = cv2.contourArea(contour)
-    print_info(True, "Measured contour area (px): ", measured_area)
+    print_info(activate_print, "Measured contour area (px): ", measured_area)
 
     return measured_area, contour_img
 
-def check_measurements_coherence(plate_area, cloth_total_area, cloth_measured_area):
+def check_measurements_coherence(plate_area, cloth_flat_area, cloth_draped_area):
     ## Checks for coherence between measured area and real areas
     
-    new_plate_area = plate_area
-    new_cloth_total_area = cloth_total_area
-    new_cloth_measured_area = cloth_measured_area
+    # new_plate_area = plate_area
+    # new_cloth_flat_area = cloth_flat_area
+    new_cloth_draped_area = cloth_draped_area
 
-    if(cloth_total_area < cloth_measured_area):
-    #Set cloth_measured_area to total (cloth_total_area is usually < than real cloth area due to usage, elasticity, etc)
+    if(cloth_flat_area < cloth_draped_area):
         print("\033[93m[WARN] Cloth flat area is less than cloth measured area \033[0m")
-        new_cloth_measured_area = cloth_total_area
-    if(cloth_measured_area < plate_area):
+        new_cloth_draped_area = cloth_flat_area #Set cloth_draped_area_cm to flat area (cloth_flat_area is usually < than real cloth area due to usage, elasticity, etc)
+    if(cloth_draped_area < plate_area):
         print("\033[93m[WARN] Cloth measured area is less than plate area \033[0m")
-    if(cloth_total_area < plate_area):
+    if(cloth_flat_area < plate_area):
         print("\033[93m[WARN] Cloth flat area is less than plate area \033[0m")
 
-    return new_plate_area, new_cloth_total_area, new_cloth_measured_area
+    return new_cloth_draped_area
 
-def compute_drape_ratio(plate_area, cloth_total_area, cloth_measured_area):
+def compute_drape_ratio(plate_area, cloth_flat_area, cloth_draped_area):
     ## Computes stiffness value through paper's formula
     ## Input: plate area in centimeters (A2), cloth real area in centimeters (A1) and cloth measured area in centimeters (A3)
 
     # Compute drape ratio
-    drape = (cloth_measured_area-plate_area) / (cloth_total_area-plate_area)
+    drape = (cloth_draped_area-plate_area) / (cloth_flat_area-plate_area)
 
-    print_info(activate_print, "Dividend: ", cloth_measured_area-plate_area)
-    print_info(activate_print, "Divisor: ", cloth_total_area-plate_area)
+    print_info(activate_print, "Dividend: ", cloth_draped_area-plate_area)
+    print_info(activate_print, "Divisor: ", cloth_flat_area-plate_area)
 
     return drape
 
@@ -176,7 +178,7 @@ def get_px_cm_ratio(aruco_img_path):
     for (markerCorner, markerID) in zip(corners, ids):
         if(markerID==14):
             # Draw polygon around the marker
-            int_corners = np.int0(markerCorner)
+            int_corners = np.intp(markerCorner)
             cv2.polylines(img, int_corners, True, (0, 255, 0), 5)
             # if(show_imgs):
             #     cv2.imshow('aruco', img)
@@ -207,73 +209,88 @@ def print_info(activate, arg1, arg2=""):
 #########################################################
 
 
+####################################
+##### COMPUTE PIXEL TO CENTIMETER RATIO #####
+px_cm_ratio = get_px_cm_ratio(aruco_image_path)
+print_info(activate_print, "Px to cm ratio: ", px_cm_ratio)
+####################################
 
-
-## Compute plate area (A2)
+####################################
+##### COMPUTE PLATE AREA(A2) #####
+## Fixed measured diameter by hand in centimeters
 plate_real_area_cm = math.pi*pow((plate_diam/2),2)
 plate_area_cm = plate_real_area_cm
 
-## Compute cloth reat area (A1)
-cloth_total_area_cm = cloth_dims[0]*cloth_dims[1]
+# ## Automatically - Measure circle area through image with Canny thresholds (in pixels)
+# print("\033[94mMeasuring plate area of \033[0m", plate_image_path)
+# aruco_img = cv2.imread(plate_image_path)
+# plate_measured_area, plate_contour_img = measure_draped_area(aruco_img)
 
-## Measure area of flat object in pixels
-print("\033[94mMeasuring flat area of \033[0m", flat_cloth_image_path)
+####################################
+
+####################################
+##### COMPUTE FLAT CLOTH AREA (A1) #####
+## Fixed - Measured by hand in centimeters
+flat_cloth_fixed_area_cm = cloth_dims[0]*cloth_dims[1] 
+
+## Automatically - Measure area through image with Canny thresholds (pixels)
+print("\033[94mMeasuring flat area of cloth in \033[0m", flat_cloth_image_path)
 flat_img = cv2.imread(flat_cloth_image_path)
-flat_cloth_measured_area, flat_contour_img = measure_draped_area(flat_img)
-## MAnual
+flat_cloth_measured_area_px, flat_contour_img = measure_draped_area(flat_img)
+
+## Manually - Measure area selecting contour in image (pixels)
 # flat_img = cv2.imread(flat_cloth_image_path) # Load image with aruco layout
 # flat_img = cv2.resize(flat_img, (int(flat_img.shape[1]*resize_percentage),int(flat_img.shape[0]*resize_percentage)), interpolation = cv2.INTER_AREA) 
-# flat_contour_img, u_cloth_per_px, flat_cloth_measured_area, u_vertices = contour_an.draw_contour(flat_img)
+# flat_contour_img, u_cloth_per_px, flat_cloth_measured_area_px, u_vertices = contour_an.draw_contour(flat_img)
 
-## Measure draped area in pixels
-print("\033[94mMeasuring drape area of \033[0m", cloth_image_path)
+flat_cloth_measured_area_cm = flat_cloth_measured_area_px/px_cm_ratio # Convert pixels to centimeters
+####################################
+
+####################################
+##### COMPUTE DRAPPED CLOTH AREA (A3) #####
+## Automatically - Measure area through image with Canny thresholds (pixels)
+print("\033[94mMeasuring drape area of cloth in \033[0m", cloth_image_path)
 img = cv2.imread(cloth_image_path)
-cloth_measured_area, contour_img = measure_draped_area(img)
-## Manual
+cloth_draped_area_px, contour_img = measure_draped_area(img)
+
+## Manually - - Measure area selecting contour in image (pixels)
 # img = cv2.imread(cloth_image_path) # Load image with aruco layout
 # img = cv2.resize(img, (int(img.shape[1]*resize_percentage),int(img.shape[0]*resize_percentage)), interpolation = cv2.INTER_AREA) 
-# contour_img, u_cloth_per_px, cloth_measured_area, u_vertices = contour_an.draw_contour(img)
+# contour_img, u_cloth_per_px, cloth_draped_area, u_vertices = contour_an.draw_contour(img)
 
-## Measure circle area in pixels
-print("\033[94mMeasuring drape area of \033[0m", plate_image_path)
-aruco_img = cv2.imread(plate_image_path)
-plate_measured_area, plate_contour_img = measure_draped_area(aruco_img)
+cloth_draped_area_cm = cloth_draped_area_px/px_cm_ratio 
+####################################
 
 
-## Obtain measured rapped area in centimeters (A3)
-px_cm_ratio = get_px_cm_ratio(aruco_image_path)
-print("Px to cm ratio: ", px_cm_ratio)
-cloth_measured_area_cm = cloth_measured_area/px_cm_ratio
-plate_area_cm, cloth_total_area_cm, cloth_measured_area_cm_corr = check_measurements_coherence(plate_area_cm, cloth_total_area_cm, cloth_measured_area_cm)
-print("A1 - Cloth real area (cm2): ", cloth_total_area_cm)
-print("A2 - Plate real area (cm2): ", plate_area_cm)
-print("A3 - Cloth measured area (cm): ", cloth_measured_area_cm)
+####################################
+##### COMPUTE STIFFNESS (A3-A2)/(A1-A2) #####
+# ## Using fixed flat cloth area and plate diameter
+# cloth_draped_area_cm_corr = check_measurements_coherence(plate_area_cm, flat_cloth_fixed_area_cm, cloth_draped_area_cm)
+# drape_ratio = compute_drape_ratio(plate_area_cm, flat_cloth_fixed_area_cm, cloth_draped_area_cm_corr)
+# print("A1 - Cloth real area (cm2): ", flat_cloth_fixed_area_cm)
+# print("A2 - Plate real area (cm2): ", plate_area_cm)
+# print("A3 - Cloth measured area (cm): ", cloth_draped_area_cm_corr)
+# print("\033[92m ---DRAPE RATIO: ", round(drape_ratio*100, 1), " % ---\033[0m")
 
-## Compute drape
-drape_ratio = compute_drape_ratio(plate_area_cm, cloth_total_area_cm, cloth_measured_area_cm)
-print("A1 - Cloth real area (cm2): ", cloth_total_area_cm)
-print("A2 - Plate real area (cm2): ", plate_area_cm)
-print("A3 - Cloth measured area (cm): ", cloth_measured_area_cm)
-print("\033[92m ---DRAPE RATIO: ", round(drape_ratio*100, 1), " % ---\033[0m")
+## Using flat area measured through image and fixed plate diameter
 
-flat_cloth_measured_area_cm = flat_cloth_measured_area/px_cm_ratio
-flat_drape_ratio = compute_drape_ratio(plate_area_cm, flat_cloth_measured_area_cm, cloth_measured_area_cm)
+drape_ratio = compute_drape_ratio(plate_area_cm, flat_cloth_measured_area_cm, cloth_draped_area_cm)
 print("A1 - Cloth measured area (cm2): ", flat_cloth_measured_area_cm)
 print("A2 - Plate area (cm2): ", plate_area_cm)
-print("A3 - Cloth measured area (cm): ", cloth_measured_area_cm)
-print("\033[92m ---DRAPE RATIO: ", round(flat_drape_ratio*100, 1), " % ---\033[0m")
+print("A3 - Cloth measured area (cm): ", cloth_draped_area_cm)
+print("\033[92m ---DRAPE RATIO: ", round(drape_ratio*100, 1), " % ---\033[0m")
 
-plate_measured_area_cm = plate_measured_area/px_cm_ratio
-full_drape_ratio = compute_drape_ratio(plate_measured_area_cm, flat_cloth_measured_area_cm, cloth_measured_area_cm)
-print("A1 - Cloth real area (cm2): ", flat_cloth_measured_area_cm)
-print("A2 - Plate real area (cm2): ", plate_measured_area_cm)
-print("A3 - Cloth measured area (cm): ", cloth_measured_area_cm)
-print("\033[92m ---DRAPE RATIO: ", round(full_drape_ratio*100, 1), " % ---\033[0m")
+# ## Using flat area and plate diameter measured through images
+# drape_ratio = compute_drape_ratio(plate_measured_area_cm, flat_cloth_measured_area_cm, cloth_draped_area_cm)
+# print("A1 - Cloth real area (cm2): ", flat_cloth_measured_area_cm)
+# print("A2 - Plate real area (cm2): ", plate_measured_area_cm)
+# print("A3 - Cloth measured area (cm): ", cloth_draped_area_cm)
+# print("\033[92m ---DRAPE RATIO: ", round(drape_ratio*100, 1), " % ---\033[0m")
 
 ## Save image
 if(save_img):
     cv2.imwrite(write_image_path, contour_img)
-    save_data_csv(round(drape_ratio*100,1), round(cloth_measured_area_cm))
+    save_data_csv(round(drape_ratio*100,1), round(cloth_draped_area_cm))
 
 
 
