@@ -12,6 +12,7 @@ data_dir = "./data/"
 write_dir = "./results/"
 csv_file = "./results/stiffness_data.csv" #CSV file where to save the results
 
+# manual_segmentation = True # Draw the cloth contour in the image instead of segmenting it with Canny thresholds
 t_lower = 400 # Lower Canny threshold #1400 #580
 t_upper = 1000  # Upper Canny threshold #4000 #2200
 resize_percentage = 0.2 # Resize image so it can be seen in computer
@@ -26,11 +27,11 @@ dilate = True
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-a", "--aruco", required=True, help="path to aruco image")
-ap.add_argument("-i", "--input", required=True, help="path to input image")
-ap.add_argument("-ii", "--flat", required=True, help="path to flat object image")
+ap.add_argument("-f", "--flat", required=True, help="path to flat object image")
+ap.add_argument("-i", "--input", required=True, help="path to draped cloth image")
 #ap.add_argument("-o", "--output", required=False, type=str, help="path to output folder")
 ap.add_argument("-p", "--plate", required=True, type=int, help="Plate diameter")
-ap.add_argument('-s', "--size", required=True, nargs=2, type=int, help='Cloth dimensions')
+ap.add_argument('-s', "--size", required=False, nargs=2, type=int, help='Cloth dimensions')
 args = vars(ap.parse_args())
 
 aruco = args["aruco"]
@@ -140,14 +141,15 @@ def compute_drape_ratio(plate_area, cloth_flat_area, cloth_draped_area):
 
     return drape
 
-def save_data_csv(drape, measured_area):
+def save_data_csv(flat_cloth_area, drape, measured_area):
 
     db = csv.reader(open(csv_file))
-    database = np.empty([0,10])
+    database = np.empty([0,9])
     for row in db:
         database = np.vstack([database, row])
 
-    data = [cloth, drape, cloth_dims[0], cloth_dims[1], measured_area, plate_diam, px_cm_ratio, t_lower, t_upper, resize_percentage]
+    # data = [cloth, drape, cloth_dims[0], cloth_dims[1], measured_area, plate_diam, px_cm_ratio, t_lower, t_upper, resize_percentage]
+    data = [cloth, drape, flat_cloth_area, measured_area, plate_diam, px_cm_ratio, t_lower, t_upper, resize_percentage]
     database = np.vstack([database, data])
 
     np.savetxt(csv_file, database, delimiter=",", fmt='%s')
@@ -231,7 +233,7 @@ plate_area_cm = plate_real_area_cm
 ####################################
 ##### COMPUTE FLAT CLOTH AREA (A1) #####
 ## Fixed - Measured by hand in centimeters
-flat_cloth_fixed_area_cm = cloth_dims[0]*cloth_dims[1] 
+# flat_cloth_fixed_area_cm = cloth_dims[0]*cloth_dims[1] 
 
 ## Automatically - Measure area through image with Canny thresholds (pixels)
 print("\033[94mMeasuring flat area of cloth in \033[0m", flat_cloth_image_path)
@@ -241,7 +243,7 @@ flat_cloth_measured_area_px, flat_contour_img = measure_draped_area(flat_img)
 ## Manually - Measure area selecting contour in image (pixels)
 # flat_img = cv2.imread(flat_cloth_image_path) # Load image with aruco layout
 # flat_img = cv2.resize(flat_img, (int(flat_img.shape[1]*resize_percentage),int(flat_img.shape[0]*resize_percentage)), interpolation = cv2.INTER_AREA) 
-# flat_contour_img, u_cloth_per_px, flat_cloth_measured_area_px, u_vertices = contour_an.draw_contour(flat_img)
+# flat_contour_img, u_cloth_per_px, flat_cloth_measured_area_px = contour_an.draw_contour(flat_img)
 
 flat_cloth_measured_area_cm = flat_cloth_measured_area_px/px_cm_ratio # Convert pixels to centimeters
 ####################################
@@ -253,10 +255,10 @@ print("\033[94mMeasuring drape area of cloth in \033[0m", cloth_image_path)
 img = cv2.imread(cloth_image_path)
 cloth_draped_area_px, contour_img = measure_draped_area(img)
 
-## Manually - - Measure area selecting contour in image (pixels)
+## Manually - Measure area selecting contour in image (pixels)
 # img = cv2.imread(cloth_image_path) # Load image with aruco layout
 # img = cv2.resize(img, (int(img.shape[1]*resize_percentage),int(img.shape[0]*resize_percentage)), interpolation = cv2.INTER_AREA) 
-# contour_img, u_cloth_per_px, cloth_draped_area, u_vertices = contour_an.draw_contour(img)
+# contour_img, u_cloth_per_px, cloth_draped_area_px = contour_an.draw_contour(img)
 
 cloth_draped_area_cm = cloth_draped_area_px/px_cm_ratio 
 ####################################
@@ -273,7 +275,6 @@ cloth_draped_area_cm = cloth_draped_area_px/px_cm_ratio
 # print("\033[92m ---DRAPE RATIO: ", round(drape_ratio*100, 1), " % ---\033[0m")
 
 ## Using flat area measured through image and fixed plate diameter
-
 drape_ratio = compute_drape_ratio(plate_area_cm, flat_cloth_measured_area_cm, cloth_draped_area_cm)
 print("A1 - Cloth measured area (cm2): ", flat_cloth_measured_area_cm)
 print("A2 - Plate area (cm2): ", plate_area_cm)
@@ -290,7 +291,7 @@ print("\033[92m ---DRAPE RATIO: ", round(drape_ratio*100, 1), " % ---\033[0m")
 ## Save image
 if(save_img):
     cv2.imwrite(write_image_path, contour_img)
-    save_data_csv(round(drape_ratio*100,1), round(cloth_draped_area_cm))
+    save_data_csv(round(flat_cloth_measured_area_cm), round(drape_ratio*100,1), round(cloth_draped_area_cm))
 
 
 

@@ -82,7 +82,7 @@ def draw_contour(trial_img):
     
     contour_img = trial_img
     
-    return contour_img, contour_perimeter, contour_area, vertices
+    return contour_img, contour_perimeter, contour_area#, vertices
 
 ## Test code
 #img_path = 'test/IMG_20221007_173646.jpg'

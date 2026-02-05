@@ -3,6 +3,8 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import sys
+import argparse
 
 from matplotlib.patches import Circle, RegularPolygon
 from matplotlib.path import Path
@@ -11,6 +13,22 @@ from matplotlib.projections import register_projection
 from matplotlib.spines import Spine
 from matplotlib.transforms import Affine2D
 
+########## INPUT ##########
+ap = argparse.ArgumentParser()
+ap.add_argument("-i", "--object_sets_db_path", required=True, help="path to object sets databases. Each column corresponds to an object set, which should contain in each row the VARIANCE (max value - min value) of each property.")
+args = vars(ap.parse_args())
+path = args["object_sets_db_path"]
+
+### Check if the file exist
+try:
+    with open(path):
+        pass
+except FileNotFoundError:
+    print(f"\033[91m[ERROR]\033[0m Image {path} does not exist")
+    sys.exit(1)
+
+df = pd.read_csv(path, index_col=0)
+# df = pd.read_csv("object_sets_data.csv", index_col=0)
 
 ## Radar chart with custom axes
 class RadarTransform(PolarAxes.PolarTransform):
@@ -66,9 +84,6 @@ class RadarAxes(PolarAxes):
 
 register_projection(RadarAxes)
 
-
-df = pd.read_csv("object_sets_data.csv", index_col=0)
-
 # axis_max = df.max(axis=1).tolist()
 axis_max = df["Range"].tolist() # Extract 'Max' column values for normalization
 print("Axis max range: ", axis_max)
@@ -111,11 +126,15 @@ ax.set_yticklabels([])
 ax.set_xticklabels([])
 # ax.tick_params(axis='y', labelsize=20, pad=10)  #Axes
 ax.set_varlabels(properties) #Axes names (properties)
+ax.set_ylim(0,1) #Since the plotted value are normalized, fix radial axis from 0 to 1
+ax.set_rgrids([0.2, 0.4, 0.6, 0.8, 1.0], angle=90) # Inner gridlines position
+
 
 
 # Axis range annotations
 for angle, max_val in zip(theta, axis_max):
-    ax.text(angle, 0.85, str(max_val), ha='center', va='center', fontsize=12)
+    ax.text(angle, 1.15, str(max_val), ha='center', va='center', fontsize=12)
+
 
 plt.show()
 
